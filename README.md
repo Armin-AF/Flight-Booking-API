@@ -1,6 +1,6 @@
 # Flight Booker API
 
-This project is a flight booking API that provides users with information on available flights, prices, and booking information. It has been built for a newly started flight booker company that needs to quickly publish their application and business within two weeks.
+This project is a flight booking API in .Net that provides users with information on available flights, prices, and booking information. It has been built for a newly started flight booker company that needs to quickly publish their application and business within two weeks.
 
 ## Getting Started
 
