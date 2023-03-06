@@ -36,4 +36,31 @@ public class FlightsController : ControllerBase
         }
         return Ok(flight);
     }
+    
+    [HttpGet("from/{from}/to/{to}")]
+    public IActionResult GetFlightRoutes(string from, string to)
+    {
+        var flights = _flightRoutes!.Where(flightRoute => flightRoute.DepartureDestination == from && flightRoute.ArrivalDestination == to);
+        if (flights == null)
+        {
+            return NotFound();
+        }
+        return Ok(flights);
+    }
+    
+    [HttpPost("book")]
+    public IActionResult BookFlight(Itinerary itinerary)
+    {
+        var flight = _flightRoutes!.FirstOrDefault(flightRoute => flightRoute.Id == itinerary.FlightId);
+        if (flight == null)
+        {
+            return NotFound();
+        }
+        if (flight.Flights[0].AvailableSeats == 0)
+        {
+            return BadRequest("No seats available");
+        }
+        flight.Flights[0].AvailableSeats--;
+        return Ok(flight);
+    }
 }
