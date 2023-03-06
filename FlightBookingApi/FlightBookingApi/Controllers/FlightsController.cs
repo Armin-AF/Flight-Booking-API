@@ -46,7 +46,9 @@ public class FlightsController : ControllerBase
     public IActionResult GetFlightRoutes(string from, string to)
     {
         var flights = _flightRoutes!.Where(flightRoute => flightRoute.departureDestination == from && flightRoute.arrivalDestination == to);
-        if (!flights.Any())
+        IEnumerable<FlightRoute> flightRoutes = flights as FlightRoute[] ?? flights.ToArray();
+        if (flightRoutes.Any() || _flightRoutes == null)
+            return Ok(flightRoutes.SelectMany(flightRoute => flightRoute.itineraries));
         {
             var flightsWithLayovers = _flightRoutes.Where(flightRoute => flightRoute.departureDestination == from)
                 .SelectMany(flightRoute => flightRoute.itineraries)
@@ -71,7 +73,6 @@ public class FlightsController : ControllerBase
             }
             return Ok(flightsWithLayovers);
         }
-        return Ok(flights.SelectMany(flightRoute => flightRoute.itineraries));
     }
     
     //Set a price-range in your search
@@ -79,11 +80,12 @@ public class FlightsController : ControllerBase
     public IActionResult GetFlightRoutes(string from, string to, decimal minPrice, decimal maxPrice)
     {
         var flights = _flightRoutes!.Where(flightRoute => flightRoute.departureDestination == from && flightRoute.arrivalDestination == to);
-        if (!flights.Any())
+        IEnumerable<FlightRoute> flightRoutes = flights as FlightRoute[] ?? flights.ToArray();
+        if (!flightRoutes.Any())
         {
             return NotFound();
         }
-        var filteredFlights = flights.SelectMany(flightRoute => flightRoute.itineraries)
+        var filteredFlights = flightRoutes.SelectMany(flightRoute => flightRoute.itineraries)
             .Where(flight => flight.prices.adult >= minPrice && flight.prices.adult <= maxPrice);
         if (!filteredFlights.Any())
         {
@@ -97,11 +99,12 @@ public class FlightsController : ControllerBase
     public IActionResult GetFlightRoutes(string from, string to, DateTime departure, DateTime arrival)
     {
         var flights = _flightRoutes!.Where(flightRoute => flightRoute.departureDestination == from && flightRoute.arrivalDestination == to);
-        if (!flights.Any())
+        IEnumerable<FlightRoute> flightRoutes = flights as FlightRoute[] ?? flights.ToArray();
+        if (!flightRoutes.Any())
         {
             return NotFound();
         }
-        var filteredFlights = flights.SelectMany(flightRoute => flightRoute.itineraries)
+        var filteredFlights = flightRoutes.SelectMany(flightRoute => flightRoute.itineraries)
             .Where(flight => flight.departureAt >= departure && flight.arrivalAt <= arrival);
         if (!filteredFlights.Any())
         {
