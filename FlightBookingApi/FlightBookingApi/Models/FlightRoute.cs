@@ -2,8 +2,8 @@ namespace FlightBookingApi.Models;
 
 public class FlightRoute
 {
-    public int Id { get; set; }
-    public string DepartureDestination { get; set; }
-    public string ArrivalDestination { get; set; }
-    public List<Flight> Flights { get; set; }
+    public string route_id { get; set; }
+    public string departureDestination { get; set; }
+    public string arrivalDestination { get; set; }
+    public List<Itinerary> itineraries { get; set; }
 }

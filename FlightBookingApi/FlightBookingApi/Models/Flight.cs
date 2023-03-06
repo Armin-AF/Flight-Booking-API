@@ -2,11 +2,9 @@ namespace FlightBookingApi.Models;
 
 public class Flight
 {
-    public int Id { get; set; }
-    public string DepartureDestination { get; set; }
-    public string ArrivalDestination { get; set; }
-    public DateTime DepartureDate { get; set; }
-    public DateTime ArrivalDate { get; set; }
-    public int AvailableSeats { get; set; }
-    public Price Price { get; set; }
+    public string flight_id { get; set; }
+    public DateTime departureAt { get; set; }
+    public DateTime arrivalAt { get; set; }
+    public int availableSeats { get; set; }
+    public Price prices { get; set; }
 }
