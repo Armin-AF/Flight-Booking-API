@@ -57,21 +57,25 @@ public class FlightsController : ControllerBase
             .SelectMany(flightRoute => flightRoute.itineraries);
         
         var flightsWithLayovers = (from departureFlight in departureFlights
-            
-            let arrivalFlights = _flightRoutes.Where(flightRoute => flightRoute.departureDestination == departureFlight.arrivalAt.ToString("yyyy-MM-ddTHH:mm:ss") && flightRoute.arrivalDestination == to)
-                .SelectMany(flightRoute => flightRoute.itineraries)
-            from arrivalFlight in arrivalFlights
-            let earliestArrival = departureFlight.arrivalAt
-            let latestDeparture = arrivalFlight.departureAt
-            let layoverDuration = (latestDeparture - earliestArrival)
-            select new Flight{
-                flight_id = departureFlight.flight_id + "-" + arrivalFlight.flight_id,
-                departureAt = departureFlight.departureAt,
-                arrivalAt = arrivalFlight.arrivalAt,
-                availableSeats = Math.Min(departureFlight.availableSeats, arrivalFlight.availableSeats),
-                prices = new Price{currency = departureFlight.prices.currency, adult = departureFlight.prices.adult + arrivalFlight.prices.adult, child = departureFlight.prices.child + arrivalFlight.prices.child},
-                layoverDuration = layoverDuration
-            }).ToList();
+                let arrivalFlights = _flightRoutes.Where(flightRoute => flightRoute.arrivalDestination == to)
+                    .SelectMany(flightRoute => flightRoute.itineraries)
+                from arrivalFlight in arrivalFlights
+                let earliestArrival = departureFlight.arrivalAt
+                let latestDeparture = arrivalFlight.departureAt
+                let layoverDuration = (latestDeparture - earliestArrival)
+                select new Flight
+                {
+                    flight_id = departureFlight.flight_id + "-" + arrivalFlight.flight_id,
+                    departureAt = departureFlight.departureAt,
+                    arrivalAt = arrivalFlight.arrivalAt,
+                    availableSeats = Math.Min(departureFlight.availableSeats, arrivalFlight.availableSeats),
+                    prices = new Price { currency = departureFlight.prices.currency, adult = departureFlight.prices.adult + arrivalFlight.prices.adult, child = departureFlight.prices.child + arrivalFlight.prices.child },
+                    layoverDuration = layoverDuration
+                })
+            .OrderBy(f => f.layoverDuration)
+            .Take(10)
+            .ToList();
+
 
         if (!flightsWithLayovers.Any())
         {
