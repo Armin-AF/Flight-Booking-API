@@ -1,29 +1,28 @@
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using FlightBookingApi.Models;
 
-namespace FlightBookingApi.Controllers;
+namespace FlightBookingApi.Controllers; 
 
-    [ApiController]
-    [Route("[controller]")]
-    public class FlightsController : ControllerBase
-    {
-        private readonly List<FlightRoute>? _flightRoutes;
-        // Add logger
-        private readonly ILogger<FlightsController> _logger;
+
+[ApiController] 
+[Route("[controller]")] 
+public class FlightsController : ControllerBase 
+
+{
+    readonly List<FlightRoute>? _flightRoutes;
+
+    readonly ILogger<FlightsController> _logger;
+
+    readonly List<Booking>? _bookings; 
+    
+    public FlightsController(ILogger<FlightsController> logger, List<Booking>? bookings)
+    { 
+        _logger = logger;
+        _bookings = bookings;
         
-        private readonly List<Booking>? _bookings;
-
-        public FlightsController(ILogger<FlightsController> logger, List<Booking>? bookings)
-        {
-            _logger = logger;
-            _bookings = bookings;
-            // Load the flight routes from the JSON file
-            var json = System.IO.File.ReadAllText("DataBase/data.json");
-            _flightRoutes = System.Text.Json.JsonSerializer.Deserialize<List<FlightRoute>>(json); 
-        }
+        var json = System.IO.File.ReadAllText("DataBase/data.json");
+        _flightRoutes = System.Text.Json.JsonSerializer.Deserialize<List<FlightRoute>>(json); 
+    } 
     
     [HttpGet]
     public IActionResult GetFlights()
@@ -35,16 +34,11 @@ namespace FlightBookingApi.Controllers;
     public IActionResult GetFlightRoute(int id)
     {
         var flight = _flightRoutes!.FirstOrDefault(flightRoute => flightRoute.route_id == id.ToString());
-        if (flight == null)
-        {
-            return NotFound();
-        }
+        if (flight == null) return NotFound();
         return Ok(flight);
     }
     
     
-    //Choosing flights depending on given destinations with  Have flights with layovers. You should then connect existing flights with each other, if a direct flight doesn't exist. For example; someone searches for Stockholm to Amsterdam. You don’t have any direct flight in your db for this, but you do have flights for Stockholm -> Oslo and Oslo -> Amsterdam. Then combine these two and present them as one flight, showing time for each flight and wait time between flights.  
-
     [HttpGet("from/{from}/to/{to}")]
     public IActionResult GetFlightRoutes(string from, string to)
     {
@@ -242,4 +236,5 @@ namespace FlightBookingApi.Controllers;
             .SelectMany(flight => flight.bookings)
             .Where(booking => booking.customer_id == userId));
     }
+    
 }
