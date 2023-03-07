@@ -214,4 +214,33 @@ public IActionResult GetFlightRoutes(string from, string to, decimal minPrice = 
         flight.availableSeats += booking.seats;
         return Ok(booking);
     }
+    
+    // User should be able to get a list of all bookings
+    [HttpGet("bookings")]
+    public IActionResult GetBookings()
+    {
+        return Ok(_flightRoutes!.SelectMany(flightRoute => flightRoute.itineraries)
+            .SelectMany(flight => flight.bookings));
+    }
+    
+    // User should be able to get a list of all bookings for a specific flight
+    [HttpGet("bookings/{flightId}")]
+    public IActionResult GetBookings(string flightId)
+    {
+        var flight = _flightRoutes!.SelectMany(flightRoute => flightRoute.itineraries)
+            .FirstOrDefault(flight => flight.flight_id == flightId);
+        if (flight == null)
+        {
+            return NotFound();
+        }
+        return Ok(flight.bookings);
+    }
+    
+    // User should be able to get a list of all bookings for a specific user
+    [HttpGet("bookings/user/{userId}")]
+    public IActionResult GetBookingsForUser(string userId){
+        return Ok(_flightRoutes!.SelectMany(flightRoute => flightRoute.itineraries)
+            .SelectMany(flight => flight.bookings)
+            .Where(booking => booking.customer_id == userId));
+    }
 }
