@@ -13,10 +13,13 @@ public class FlightsController : ControllerBase
     private readonly List<FlightRoute>? _flightRoutes;
     // Add logger
     private readonly ILogger<FlightsController> _logger;
+    
+    private readonly List<Booking>? _bookings;
 
-    public FlightsController(ILogger<FlightsController> logger)
+    public FlightsController(ILogger<FlightsController> logger, List<Booking>? bookings)
     {
         _logger = logger;
+        _bookings = bookings;
         // Load the flight routes from the JSON file
         var json = System.IO.File.ReadAllText("DataBase/data.json");
         _flightRoutes = System.Text.Json.JsonSerializer.Deserialize<List<FlightRoute>>(json);
@@ -198,6 +201,7 @@ public IActionResult GetFlightRoutes(string from, string to, decimal minPrice = 
             return BadRequest("Not enough seats available");
         }
         flight.availableSeats -= booking.seats;
+        _bookings!.Add(booking);
         return Ok(booking);
     }
     
@@ -212,6 +216,7 @@ public IActionResult GetFlightRoutes(string from, string to, decimal minPrice = 
             return NotFound();
         }
         flight.availableSeats += booking.seats;
+        _bookings!.Remove(booking);
         return Ok(booking);
     }
     
