@@ -6,24 +6,24 @@ using FlightBookingApi.Models;
 
 namespace FlightBookingApi.Controllers;
 
-[ApiController]
-[Route("[controller]")]
-public class FlightsController : ControllerBase
-{
-    private readonly List<FlightRoute>? _flightRoutes;
-    // Add logger
-    private readonly ILogger<FlightsController> _logger;
-    
-    private readonly List<Booking>? _bookings;
-
-    public FlightsController(ILogger<FlightsController> logger, List<Booking>? bookings)
+    [ApiController]
+    [Route("[controller]")]
+    public class FlightsController : ControllerBase
     {
-        _logger = logger;
-        _bookings = bookings;
-        // Load the flight routes from the JSON file
-        var json = System.IO.File.ReadAllText("DataBase/data.json");
-        _flightRoutes = System.Text.Json.JsonSerializer.Deserialize<List<FlightRoute>>(json);
-    }
+        private readonly List<FlightRoute>? _flightRoutes;
+        // Add logger
+        private readonly ILogger<FlightsController> _logger;
+        
+        private readonly List<Booking>? _bookings;
+
+        public FlightsController(ILogger<FlightsController> logger, List<Booking>? bookings)
+        {
+            _logger = logger;
+            _bookings = bookings;
+            // Load the flight routes from the JSON file
+            var json = System.IO.File.ReadAllText("DataBase/data.json");
+            _flightRoutes = System.Text.Json.JsonSerializer.Deserialize<List<FlightRoute>>(json); 
+        }
     
     [HttpGet]
     public IActionResult GetFlights()
@@ -47,18 +47,17 @@ public class FlightsController : ControllerBase
 
     [HttpGet("from/{from}/to/{to}")]
     public IActionResult GetFlightRoutes(string from, string to)
-{
-    var flights = _flightRoutes!.Where(flightRoute => flightRoute.departureDestination == from && flightRoute.arrivalDestination == to);
-    IEnumerable<FlightRoute> flightRoutes = flights as FlightRoute[] ?? flights.ToArray();
-    if (flightRoutes.Any() || _flightRoutes == null)
     {
-        return Ok(flightRoutes.SelectMany(flightRoute => flightRoute.itineraries));
-    }
-    else
-    {
+        var flights = _flightRoutes!.Where(flightRoute => flightRoute.departureDestination == from && flightRoute.arrivalDestination == to);
+        IEnumerable<FlightRoute> flightRoutes = flights as FlightRoute[] ?? flights.ToArray();
+        if (flightRoutes.Any() || _flightRoutes == null)
+        {
+            return Ok(flightRoutes.SelectMany(flightRoute => flightRoute.itineraries));
+        }
+
         var departureFlights = _flightRoutes.Where(flightRoute => flightRoute.departureDestination == from)
             .SelectMany(flightRoute => flightRoute.itineraries);
-        
+            
         var flightsWithLayovers = (from departureFlight in departureFlights
                 let arrivalFlights = _flightRoutes.Where(flightRoute => flightRoute.arrivalDestination == to)
                     .SelectMany(flightRoute => flightRoute.itineraries)
@@ -87,24 +86,22 @@ public class FlightsController : ControllerBase
 
         return Ok(flightsWithLayovers);
     }
-}
 
 
 
     [HttpGet("from/{from}/to/{to}/minPrice/{minPrice}/maxPrice/{maxPrice}")]
-public IActionResult GetFlightRoutes(string from, string to, decimal minPrice, decimal maxPrice)
-{
-    var flights = _flightRoutes!.Where(flightRoute => flightRoute.departureDestination == from && flightRoute.arrivalDestination == to);
-    IEnumerable<FlightRoute> flightRoutes = flights as FlightRoute[] ?? flights.ToArray();
-    if (flightRoutes.Any() || _flightRoutes == null)
+    public IActionResult GetFlightRoutes(string from, string to, decimal minPrice, decimal maxPrice)
     {
-        return Ok(flightRoutes.SelectMany(flightRoute => flightRoute.itineraries));
-    }
-    else
-    {
+        var flights = _flightRoutes!.Where(flightRoute => flightRoute.departureDestination == from && flightRoute.arrivalDestination == to);
+        IEnumerable<FlightRoute> flightRoutes = flights as FlightRoute[] ?? flights.ToArray();
+        if (flightRoutes.Any() || _flightRoutes == null)
+        {
+            return Ok(flightRoutes.SelectMany(flightRoute => flightRoute.itineraries));
+        }
+
         var departureFlights = _flightRoutes.Where(flightRoute => flightRoute.departureDestination == from)
             .SelectMany(flightRoute => flightRoute.itineraries);
-        
+            
         var flightsWithLayovers = (from departureFlight in departureFlights
                 let arrivalFlights = _flightRoutes.Where(flightRoute => flightRoute.arrivalDestination == to)
                     .SelectMany(flightRoute => flightRoute.itineraries)
@@ -135,21 +132,19 @@ public IActionResult GetFlightRoutes(string from, string to, decimal minPrice, d
 
         return Ok(flightsWithLayovers);
     }
-}
 
 
     
     [HttpGet("from/{from}/to/{to}/minPrice/{minPrice}/maxPrice/{maxPrice}/departure/{departure}/arrival/{arrival}")]
-public IActionResult GetFlightRoutes(string from, string to, decimal minPrice = 0, decimal maxPrice = decimal.MaxValue, DateTime? departure = null, DateTime? arrival = null)
-{
-    var flights = _flightRoutes!.Where(flightRoute => flightRoute.departureDestination == from && flightRoute.arrivalDestination == to);
-    IEnumerable<FlightRoute> flightRoutes = flights as FlightRoute[] ?? flights.ToArray();
-    if (flightRoutes.Any() || _flightRoutes == null)
+    public IActionResult GetFlightRoutes(string from, string to, decimal minPrice = 0, decimal maxPrice = decimal.MaxValue, DateTime? departure = null, DateTime? arrival = null)
     {
-        return Ok(flightRoutes.SelectMany(flightRoute => flightRoute.itineraries));
-    }
-    else
-    {
+        var flights = _flightRoutes!.Where(flightRoute => flightRoute.departureDestination == from && flightRoute.arrivalDestination == to);
+        IEnumerable<FlightRoute> flightRoutes = flights as FlightRoute[] ?? flights.ToArray();
+        if (flightRoutes.Any() || _flightRoutes == null)
+        {
+            return Ok(flightRoutes.SelectMany(flightRoute => flightRoute.itineraries));
+        }
+
         var departureFlights = _flightRoutes.Where(flightRoute => flightRoute.departureDestination == from)
             .SelectMany(flightRoute => flightRoute.itineraries);
 
@@ -183,7 +178,6 @@ public IActionResult GetFlightRoutes(string from, string to, decimal minPrice = 
 
         return Ok(flightsWithLayovers);
     }
-}
 
     
     // User should be able to book a flight with Error checking for invalid bookings (Not enough seating, etc)
