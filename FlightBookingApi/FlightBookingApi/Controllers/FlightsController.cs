@@ -45,36 +45,41 @@ public class FlightsController : ControllerBase
     [HttpGet("from/{from}/to/{to}")]
     public IActionResult GetFlightRoutes(string from, string to)
     {
-        var flights = _flightRoutes!.Where(flightRoute => flightRoute.departureDestination == from && flightRoute.arrivalDestination == to);
-        IEnumerable<FlightRoute> flightRoutes = flights as FlightRoute[] ?? flights.ToArray();
-        if (flightRoutes.Any() || _flightRoutes == null)
-            return Ok(flightRoutes.SelectMany(flightRoute => flightRoute.itineraries));
-        {
-            var flightsWithLayovers = _flightRoutes.Where(flightRoute => flightRoute.departureDestination == from)
-                .SelectMany(flightRoute => flightRoute.itineraries)
-                .SelectMany(flight => _flightRoutes.Where(flightRoute => flightRoute.departureDestination == flight.arrivalAt.ToString("yyyy-MM-ddTHH:mm:ss") && flightRoute.arrivalDestination == to)
-                    .SelectMany(flightRoute => flightRoute.itineraries)
-                    .Select(flightRoute => new Flight
+        var directFlights = _flightRoutes
+            .Where(fr => fr.departureDestination == from && fr.arrivalDestination == to)
+            .SelectMany(fr => fr.itineraries);
+
+        var indirectFlights = _flightRoutes
+            .Where(fr => fr.departureDestination == from)
+            .SelectMany(fr => fr.itineraries)
+            .SelectMany(fi => _flightRoutes
+                .Where(fr => fr.departureDestination == fi.arrivalAt.ToString("yyyy-MM-ddTHH:mm:ss") && fr.arrivalDestination == to)
+                .SelectMany(fr => fr.itineraries)
+                .Select(fi2 => new Flight
+                {
+                    flight_id = fi.flight_id + " - " + fi2.flight_id,
+                    departureAt = fi.departureAt,
+                    arrivalAt = fi2.arrivalAt,
+                    availableSeats = Math.Min(fi.availableSeats, fi2.availableSeats),
+                    prices = new Price
                     {
-                        flight_id = flight.flight_id + flightRoute.flight_id,
-                        departureAt = flight.departureAt,
-                        arrivalAt = flightRoute.arrivalAt,
-                        availableSeats = flight.availableSeats,
-                        prices = new Price
-                        {
-                            currency = flight.prices.currency,
-                            adult = flight.prices.adult + flightRoute.prices.adult,
-                            child = flight.prices.child + flightRoute.prices.child
-                        }
-                    }));
-            if (!flightsWithLayovers.Any())
-            {
-                return NotFound();
-            }
-            return Ok(flightsWithLayovers);
+                        currency = fi.prices.currency,
+                        adult = fi.prices.adult + fi2.prices.adult,
+                        child = fi.prices.child + fi2.prices.child
+                    }
+                }));
+
+        var flights = directFlights.Concat(indirectFlights);
+
+        if (!flights.Any())
+        {
+            return NotFound();
         }
+
+        return Ok(flights);
     }
-    
+
+
     //Set a price-range in your search
     [HttpGet("from/{from}/to/{to}/minPrice/{minPrice}/maxPrice/{maxPrice}")]
     public IActionResult GetFlightRoutes(string from, string to, decimal minPrice, decimal maxPrice)
@@ -144,5 +149,5 @@ public class FlightsController : ControllerBase
         flight.availableSeats += booking.seats;
         return Ok(booking);
     }
-    
+
 }
