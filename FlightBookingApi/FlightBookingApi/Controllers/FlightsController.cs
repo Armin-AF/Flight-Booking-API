@@ -131,4 +131,18 @@ public class FlightsController : ControllerBase
         return Ok(booking);
     }
     
+    // User should be able to cancel a booking
+    [HttpDelete("cancel")]
+    public IActionResult CancelFlight(Booking booking)
+    {
+        var flight = _flightRoutes!.SelectMany(flightRoute => flightRoute.itineraries)
+            .FirstOrDefault(flight => flight.flight_id == booking.flight_id);
+        if (flight == null)
+        {
+            return NotFound();
+        }
+        flight.availableSeats += booking.seats;
+        return Ok(booking);
+    }
+    
 }
