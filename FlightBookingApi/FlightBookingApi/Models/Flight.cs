@@ -7,4 +7,5 @@ public class Flight
     public DateTime arrivalAt { get; set; }
     public int availableSeats { get; set; }
     public Price prices { get; set; }
+    public TimeSpan layoverDuration{ get; set; } = TimeSpan.Zero;
 }
