@@ -12,14 +12,12 @@ public class FlightsController : ControllerBase
     readonly List<FlightRoute>? _flightRoutes;
 
     readonly ILogger<FlightsController> _logger;
-
-    readonly List<Booking>? _bookings; 
     
-    public FlightsController(ILogger<FlightsController> logger, List<Booking>? bookings)
+    
+    public FlightsController(ILogger<FlightsController> logger)
     { 
         _logger = logger;
-        _bookings = bookings;
-        
+
         var json = System.IO.File.ReadAllText("DataBase/data.json");
         _flightRoutes = System.Text.Json.JsonSerializer.Deserialize<List<FlightRoute>>(json); 
     } 
@@ -189,7 +187,6 @@ public class FlightsController : ControllerBase
             return BadRequest("Not enough seats available");
         }
         flight.availableSeats -= booking.seats;
-        _bookings!.Add(booking);
         return Ok(booking);
     }
     
@@ -204,7 +201,6 @@ public class FlightsController : ControllerBase
             return NotFound();
         }
         flight.availableSeats += booking.seats;
-        _bookings!.Remove(booking);
         return Ok(booking);
     }
     
