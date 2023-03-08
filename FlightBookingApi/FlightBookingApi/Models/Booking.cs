@@ -15,8 +15,4 @@ public class Booking
     [ForeignKey("customer_id")]
     public string customer_id { get; set; }
     
-    public virtual Customer customer { get; set; }
-    
-    public virtual Flight flight { get; set; }
-    
 }

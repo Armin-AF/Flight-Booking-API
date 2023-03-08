@@ -15,34 +15,5 @@ public class FlightDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-
-        modelBuilder.Entity<Flight>()
-            .HasMany(f => f.bookings)
-            .WithOne(b => b.flight)
-            .HasForeignKey(b => b.flight_id);
-
-        modelBuilder.Entity<FlightRoute>()
-            .HasMany(r => r.itineraries)
-            .WithOne(f => f.route)
-            .HasForeignKey(f => f.route_id);
-
-        modelBuilder.Entity<Flight>()
-            .HasOne(f => f.prices)
-            .WithOne()
-            .HasForeignKey<Price>(p => p.flight_id)
-            .IsRequired();
-
-        modelBuilder.Entity<Booking>()
-            .HasOne(b => b.flight)
-            .WithMany(f => f.bookings)
-            .HasForeignKey(b => b.flight_id);
-
-        modelBuilder.Entity<Booking>()
-            .HasOne(b => b.customer)
-            .WithMany()
-            .HasForeignKey(b => b.customer_id);
-
-        modelBuilder.Entity<Price>()
-            .HasKey(p => p.flight_id);
     }
 }
