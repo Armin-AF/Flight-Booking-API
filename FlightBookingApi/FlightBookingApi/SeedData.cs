@@ -12,7 +12,7 @@ public class SeedData : Migration
     {
         // Read data from JSON file
         string json = File.ReadAllText("data.json");
-        List<FlightRoute> flightRoutes = JsonConvert.DeserializeObject<List<FlightRoute>>(json);
+        var flightRoutes = JsonConvert.DeserializeObject<List<FlightRoute>>(json);
 
         // Create database context
         var optionsBuilder = new DbContextOptionsBuilder<FlightDbContext>();
