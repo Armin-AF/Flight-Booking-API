@@ -38,6 +38,10 @@
         "net7.0": {
           "targetAlias": "net7.0",
           "dependencies": {
+            "JsonConverter.Newtonsoft.Json": {
+              "target": "Package",
+              "version": "[0.4.0, )"
+            },
             "Microsoft.AspNetCore.OpenApi": {
               "target": "Package",
               "version": "[7.0.0-rc.1.22427.2, )"
