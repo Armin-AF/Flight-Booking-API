@@ -8,7 +8,7 @@ namespace FlightBookingApi.Controllers;
 [Route("[controller]")]
 public class BookingsController : ControllerBase
 {
-    readonly List<Booking> _bookings = new List<Booking>();
+    readonly List<Booking> _bookings = new();
     
     public BookingsController ()
     {
@@ -32,6 +32,13 @@ public class BookingsController : ControllerBase
             flight_id = "3",
             seats = 3,
             customer_id = "3"
+        });
+        _bookings.Add(new Booking
+        {
+            booking_id = "4",
+            flight_id = "4",
+            seats = 4,
+            customer_id = "4"
         });
     }
     
