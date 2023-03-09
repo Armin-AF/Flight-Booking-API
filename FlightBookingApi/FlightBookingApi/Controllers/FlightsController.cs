@@ -33,6 +33,7 @@ public class FlightsController : ControllerBase
     {
         var flight = _flightRoutes!.FirstOrDefault(flightRoute => flightRoute.route_id == id.ToString());
         if (flight == null) return NotFound();
+        _logger.LogInformation("Flight: {flight}", flight);
         return Ok(flight);
     }
     
@@ -49,6 +50,8 @@ public class FlightsController : ControllerBase
 
         var departureFlights = _flightRoutes.Where(flightRoute => flightRoute.departureDestination == from)
             .SelectMany(flightRoute => flightRoute.itineraries);
+        
+        _logger.LogInformation("Departure flights: {departureFlights}", departureFlights);
             
         var flightsWithLayovers = (from departureFlight in departureFlights
                 let arrivalFlights = _flightRoutes.Where(flightRoute => flightRoute.arrivalDestination == to)
@@ -90,9 +93,11 @@ public class FlightsController : ControllerBase
         {
             return Ok(flightRoutes.SelectMany(flightRoute => flightRoute.itineraries));
         }
-
+        
         var departureFlights = _flightRoutes.Where(flightRoute => flightRoute.departureDestination == from)
             .SelectMany(flightRoute => flightRoute.itineraries);
+        
+        _logger.LogInformation("Departure flights: {departureFlights}", departureFlights);
             
         var flightsWithLayovers = (from departureFlight in departureFlights
                 let arrivalFlights = _flightRoutes.Where(flightRoute => flightRoute.arrivalDestination == to)
@@ -139,6 +144,7 @@ public class FlightsController : ControllerBase
 
         var departureFlights = _flightRoutes.Where(flightRoute => flightRoute.departureDestination == from)
             .SelectMany(flightRoute => flightRoute.itineraries);
+        _logger.LogInformation("Departure flights: {departureFlights}", departureFlights);
 
         var flightsWithLayovers = (from departureFlight in departureFlights
                 let arrivalFlights = _flightRoutes.Where(flightRoute => flightRoute.arrivalDestination == to)
@@ -161,6 +167,7 @@ public class FlightsController : ControllerBase
             .OrderBy(f => f.layoverDuration)
             .Take(10)
             .ToList();
+        _logger.LogInformation("Flights with layovers: {flightsWithLayovers}", flightsWithLayovers);
 
 
         if (!flightsWithLayovers.Any())
