@@ -39,141 +39,176 @@ public class FlightsController : ControllerBase
 
 
     [HttpGet("from/{from}/to/{to}")]
-public IActionResult GetFlightRoutes(string from, string to)
-{
-    var directFlights = _flightRoutes
-        .Where(flightRoute => flightRoute.departureDestination == from && flightRoute.arrivalDestination == to)
-        .SelectMany(flightRoute => flightRoute.itineraries)
-        .ToList();
-
-    if (directFlights.Any())
+    public IActionResult GetFlightRoutes(string from, string to)
     {
-        return Ok(directFlights);
+        var directFlights = _flightRoutes
+            .Where(flightRoute => flightRoute.departureDestination == from && flightRoute.arrivalDestination == to)
+            .SelectMany(flightRoute => flightRoute.itineraries)
+            .ToList();
+
+        if (directFlights.Any())
+        {
+            return Ok(directFlights);
+        }
+
+        var departureFlights = _flightRoutes
+            .Where(flightRoute => flightRoute.departureDestination == from)
+            .SelectMany(flightRoute => flightRoute.itineraries)
+            .ToList();
+
+        var arrivalFlights = _flightRoutes
+            .Where(flightRoute => flightRoute.arrivalDestination == to)
+            .SelectMany(flightRoute => flightRoute.itineraries)
+            .ToList();
+
+        var flightsWithLayovers = (from departureFlight in departureFlights
+                                   from arrivalFlight in arrivalFlights
+                                   where departureFlight.arrivalAt <= arrivalFlight.departureAt
+                                   let layoverDuration = (arrivalFlight.departureAt - departureFlight.arrivalAt)
+                                   orderby layoverDuration
+                                   select new Flight
+                                   {
+                                       flight_id = departureFlight.flight_id + "-" + arrivalFlight.flight_id,
+                                       departureAt = departureFlight.departureAt,
+                                       arrivalAt = arrivalFlight.arrivalAt,
+                                       availableSeats = Math.Min(departureFlight.availableSeats, arrivalFlight.availableSeats),
+                                       prices = new Price { currency = departureFlight.prices.currency, adult = departureFlight.prices.adult + arrivalFlight.prices.adult, child = departureFlight.prices.child + arrivalFlight.prices.child },
+                                       layoverDuration = layoverDuration
+                                   })
+            .Take(10)
+            .ToList();
+
+        if (!flightsWithLayovers.Any())
+        {
+            return NotFound();
+        }
+
+        return Ok(flightsWithLayovers);
     }
-
-    var departureFlights = _flightRoutes
-        .Where(flightRoute => flightRoute.departureDestination == from)
-        .SelectMany(flightRoute => flightRoute.itineraries)
-        .ToList();
-
-    var arrivalFlights = _flightRoutes
-        .Where(flightRoute => flightRoute.arrivalDestination == to)
-        .SelectMany(flightRoute => flightRoute.itineraries)
-        .ToList();
-
-    var flightsWithLayovers = (from departureFlight in departureFlights
-                               from arrivalFlight in arrivalFlights
-                               where departureFlight.arrivalAt <= arrivalFlight.departureAt
-                               let layoverDuration = (arrivalFlight.departureAt - departureFlight.arrivalAt)
-                               orderby layoverDuration
-                               select new Flight
-                               {
-                                   flight_id = departureFlight.flight_id + "-" + arrivalFlight.flight_id,
-                                   departureAt = departureFlight.departureAt,
-                                   arrivalAt = arrivalFlight.arrivalAt,
-                                   availableSeats = Math.Min(departureFlight.availableSeats, arrivalFlight.availableSeats),
-                                   prices = new Price { currency = departureFlight.prices.currency, adult = departureFlight.prices.adult + arrivalFlight.prices.adult, child = departureFlight.prices.child + arrivalFlight.prices.child },
-                                   layoverDuration = layoverDuration
-                               })
-        .Take(10)
-        .ToList();
-
-    if (!flightsWithLayovers.Any())
-    {
-        return NotFound();
-    }
-
-    return Ok(flightsWithLayovers);
-}
-
-
-
-
+    
     [HttpGet("from/{from}/to/{to}/minPrice/{minPrice}/maxPrice/{maxPrice}")]
     public IActionResult GetFlightRoutes(string from, string to, decimal minPrice, decimal maxPrice)
     {
-        var flights = _flightRoutes!.Where(flightRoute => flightRoute.departureDestination == from && flightRoute.arrivalDestination == to);
-        IEnumerable<FlightRoute> flightRoutes = flights as FlightRoute[] ?? flights.ToArray();
-        if (flightRoutes.Any() || _flightRoutes == null)
+        var flightRoutes = _flightRoutes?
+            .Where(flightRoute => flightRoute.departureDestination == from && flightRoute.arrivalDestination == to);
+
+        if (flightRoutes == null || !flightRoutes.Any())
         {
-            return Ok(flightRoutes.SelectMany(flightRoute => flightRoute.itineraries));
+            var departureFlights = _flightRoutes
+                ?.Where(flightRoute => flightRoute.departureDestination == from)
+                .SelectMany(flightRoute => flightRoute.itineraries);
+
+            if (departureFlights == null)
+            {
+                return NotFound();
+            }
+
+            var flightsWithLayovers = (from departureFlight in departureFlights
+                                       let arrivalFlights = _flightRoutes.Where(flightRoute => flightRoute.arrivalDestination == to)
+                                           .SelectMany(flightRoute => flightRoute.itineraries)
+                                       from arrivalFlight in arrivalFlights
+                                       let earliestArrival = departureFlight.arrivalAt
+                                       let latestDeparture = arrivalFlight.departureAt
+                                       let layoverDuration = latestDeparture - earliestArrival
+                                       let totalFlightPrice = departureFlight.prices.adult + arrivalFlight.prices.adult
+                                       where totalFlightPrice >= minPrice && totalFlightPrice <= maxPrice
+                                       select new Flight
+                                       {
+                                           flight_id = departureFlight.flight_id + "-" + arrivalFlight.flight_id,
+                                           departureAt = departureFlight.departureAt,
+                                           arrivalAt = arrivalFlight.arrivalAt,
+                                           availableSeats = Math.Min(departureFlight.availableSeats, arrivalFlight.availableSeats),
+                                           prices = new Price { currency = departureFlight.prices.currency, adult = totalFlightPrice, child = departureFlight.prices.child + arrivalFlight.prices.child },
+                                           layoverDuration = layoverDuration
+                                       })
+                .OrderBy(f => f.layoverDuration)
+                .Take(10)
+                .ToList();
+
+            if (!flightsWithLayovers.Any())
+            {
+                return NotFound();
+            }
+
+            return Ok(flightsWithLayovers);
         }
-        
-        var departureFlights = _flightRoutes.Where(flightRoute => flightRoute.departureDestination == from)
-            .SelectMany(flightRoute => flightRoute.itineraries);
-        
-        _logger.LogInformation("Departure flights: {departureFlights}", departureFlights);
-            
-        var flightsWithLayovers = (from departureFlight in departureFlights
-                let arrivalFlights = _flightRoutes.Where(flightRoute => flightRoute.arrivalDestination == to)
-                    .SelectMany(flightRoute => flightRoute.itineraries)
-                from arrivalFlight in arrivalFlights
-                let earliestArrival = departureFlight.arrivalAt
-                let latestDeparture = arrivalFlight.departureAt
-                let layoverDuration = (latestDeparture - earliestArrival)
-                let totalFlightPrice = departureFlight.prices.adult + arrivalFlight.prices.adult
-                where totalFlightPrice >= minPrice && totalFlightPrice <= maxPrice
-                select new Flight
-                {
-                    flight_id = departureFlight.flight_id + "-" + arrivalFlight.flight_id,
-                    departureAt = departureFlight.departureAt,
-                    arrivalAt = arrivalFlight.arrivalAt,
-                    availableSeats = Math.Min(departureFlight.availableSeats, arrivalFlight.availableSeats),
-                    prices = new Price { currency = departureFlight.prices.currency, adult = totalFlightPrice, child = departureFlight.prices.child + arrivalFlight.prices.child },
-                    layoverDuration = layoverDuration
-                })
-            .OrderBy(f => f.layoverDuration)
-            .Take(10)
-            .ToList();
-
-
-        if (!flightsWithLayovers.Any())
+        else
         {
-            return NotFound();
-        }
+            var flights = flightRoutes.SelectMany(flightRoute => flightRoute.itineraries)
+                .Where(flight => flight.prices.adult >= minPrice && flight.prices.adult <= maxPrice)
+                .ToList();
 
-        return Ok(flightsWithLayovers);
+            if (!flights.Any())
+            {
+                return NotFound();
+            }
+
+            return Ok(flights);
+        }
     }
 
-
     
-    [HttpGet("from/{from}/to/{to}/minPrice/{minPrice}/maxPrice/{maxPrice}/departure/{departure}/arrival/{arrival}")]
+    [HttpGet("from/{from}/to/{to}/minPrice/{minPrice}/maxPrice/{maxPrice}/departure/{departure?}/arrival/{arrival?}")]
     public IActionResult GetFlightRoutes(string from, string to, decimal minPrice = 0, decimal maxPrice = decimal.MaxValue, DateTime? departure = null, DateTime? arrival = null)
     {
         var flights = _flightRoutes!.Where(flightRoute => flightRoute.departureDestination == from && flightRoute.arrivalDestination == to);
-        IEnumerable<FlightRoute> flightRoutes = flights as FlightRoute[] ?? flights.ToArray();
-        if (flightRoutes.Any() || _flightRoutes == null)
+        if (!flights.Any())
         {
-            return Ok(flightRoutes.SelectMany(flightRoute => flightRoute.itineraries));
+            return NotFound();
         }
 
         var departureFlights = _flightRoutes.Where(flightRoute => flightRoute.departureDestination == from)
             .SelectMany(flightRoute => flightRoute.itineraries);
-        _logger.LogInformation("Departure flights: {departureFlights}", departureFlights);
 
-        var flightsWithLayovers = (from departureFlight in departureFlights
-                let arrivalFlights = _flightRoutes.Where(flightRoute => flightRoute.arrivalDestination == to)
-                    .SelectMany(flightRoute => flightRoute.itineraries)
-                from arrivalFlight in arrivalFlights
-                let earliestArrival = departureFlight.arrivalAt
-                let latestDeparture = arrivalFlight.departureAt
-                let layoverDuration = (latestDeparture - earliestArrival)
-                where departureFlight.prices.adult + arrivalFlight.prices.adult >= minPrice && departureFlight.prices.adult + arrivalFlight.prices.adult <= maxPrice
-                    && (!departure.HasValue || departureFlight.departureAt >= departure.Value) && (!arrival.HasValue || arrivalFlight.arrivalAt <= arrival.Value)
-                select new Flight
+        var flightsWithLayovers = departureFlights.SelectMany(departureFlight =>
+        {
+            var arrivalFlights = _flightRoutes.Where(flightRoute => flightRoute.arrivalDestination == to)
+                .SelectMany(flightRoute => flightRoute.itineraries);
+
+            var validArrivalFlights = arrivalFlights
+                .Where(arrivalFlight => arrivalFlight.departureAt > departureFlight.arrivalAt &&
+                                        (!arrival.HasValue || arrivalFlight.arrivalAt <= arrival.Value));
+
+            return validArrivalFlights.Select(arrivalFlight =>
+            {
+                var totalFlightPrice = departureFlight.prices.adult + arrivalFlight.prices.adult;
+
+                if (totalFlightPrice < minPrice || totalFlightPrice > maxPrice)
+                {
+                    return null;
+                }
+
+                var layoverDuration = arrivalFlight.departureAt - departureFlight.arrivalAt;
+                if (layoverDuration < TimeSpan.Zero)
+                {
+                    return null;
+                }
+
+                if (departure.HasValue && departureFlight.departureAt < departure.Value)
+                {
+                    return null;
+                }
+
+                return new Flight
                 {
                     flight_id = departureFlight.flight_id + "-" + arrivalFlight.flight_id,
                     departureAt = departureFlight.departureAt,
                     arrivalAt = arrivalFlight.arrivalAt,
                     availableSeats = Math.Min(departureFlight.availableSeats, arrivalFlight.availableSeats),
-                    prices = new Price { currency = departureFlight.prices.currency, adult = departureFlight.prices.adult + arrivalFlight.prices.adult, child = departureFlight.prices.child + arrivalFlight.prices.child },
+                    prices = new Price
+                    {
+                        currency = departureFlight.prices.currency,
+                        adult = totalFlightPrice,
+                        child = departureFlight.prices.child + arrivalFlight.prices.child
+                    },
                     layoverDuration = layoverDuration
-                })
-            .OrderBy(f => f.layoverDuration)
-            .Take(10)
-            .ToList();
-        _logger.LogInformation("Flights with layovers: {flightsWithLayovers}", flightsWithLayovers);
-
+                };
+            });
+        })
+        .Where(f => f != null)
+        .OrderBy(f => f.layoverDuration)
+        .Take(10)
+        .ToList();
 
         if (!flightsWithLayovers.Any())
         {
@@ -182,4 +217,5 @@ public IActionResult GetFlightRoutes(string from, string to)
 
         return Ok(flightsWithLayovers);
     }
+
 }
