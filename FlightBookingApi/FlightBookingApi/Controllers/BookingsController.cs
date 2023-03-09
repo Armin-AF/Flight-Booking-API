@@ -9,37 +9,41 @@ namespace FlightBookingApi.Controllers;
 public class BookingsController : ControllerBase
 {
     readonly List<Booking> _bookings = new();
-    
+    readonly List<FlightRoute> _flightRoutes;
+
     public BookingsController ()
     {
         _bookings.Add(new Booking
         {
             booking_id = "1",
-            flight_id = "1",
+            flight_id = "87211f8b",
             seats = 1,
             customer_id = "1"
         });
         _bookings.Add(new Booking
         {
             booking_id = "2",
-            flight_id = "2",
+            flight_id = "87211f8b",
             seats = 2,
             customer_id = "2"
         });
         _bookings.Add(new Booking
         {
             booking_id = "3",
-            flight_id = "3",
+            flight_id = "87211f8b",
             seats = 3,
             customer_id = "3"
         });
         _bookings.Add(new Booking
         {
             booking_id = "4",
-            flight_id = "4",
+            flight_id = "87211f8b",
             seats = 4,
             customer_id = "4"
         });
+        
+        var json = System.IO.File.ReadAllText("DataBase/data.json");
+        _flightRoutes = System.Text.Json.JsonSerializer.Deserialize<List<FlightRoute>>(json)!; 
     }
     
     [HttpGet]
@@ -59,6 +63,12 @@ public class BookingsController : ControllerBase
     [HttpPost]
     public IActionResult PostBooking(Booking booking)
     {
+        if (booking.seats < 1) return BadRequest();
+        // check if flight exists or the number of seats is available
+        var flight = _flightRoutes.FirstOrDefault(flightRoute => flightRoute.itineraries.Any(flight => flight.flight_id == booking.flight_id));
+        if (flight == null) return NotFound();
+        var seatsAvailable = flight.itineraries.FirstOrDefault(f => f.flight_id == booking.flight_id)?.availableSeats;
+        if (seatsAvailable == null || seatsAvailable < booking.seats) return BadRequest();
         _bookings.Add(booking);
         return Ok(booking);
     }
@@ -75,7 +85,7 @@ public class BookingsController : ControllerBase
     [HttpPut("{id}")]
     public IActionResult PutBooking(string id, Booking booking)
     {
-        var bookingToUpdate = _bookings.FirstOrDefault(booking => booking.booking_id == id);
+        var bookingToUpdate = _bookings.FirstOrDefault(b => b.booking_id == id);
         if (bookingToUpdate == null) return NotFound();
         bookingToUpdate = booking;
         return Ok(bookingToUpdate);
@@ -84,7 +94,7 @@ public class BookingsController : ControllerBase
     [HttpPatch("{id}")]
     public IActionResult PatchBooking(string id, Booking booking)
     {
-        var bookingToUpdate = _bookings.FirstOrDefault(booking => booking.booking_id == id);
+        var bookingToUpdate = _bookings.FirstOrDefault(b => b.booking_id == id);
         if (bookingToUpdate == null) return NotFound();
         bookingToUpdate = booking;
         return Ok(bookingToUpdate);
