@@ -56,7 +56,9 @@ public class BookingsController : ControllerBase
     public IActionResult GetBooking(string id)
     {
         var booking = _bookings.FirstOrDefault(booking => booking.booking_id == id);
+        
         if (booking == null) return NotFound();
+        
         return Ok(booking);
     }
     
@@ -102,15 +104,20 @@ public class BookingsController : ControllerBase
         var bookingToUpdate = _bookings.FirstOrDefault(b => b.booking_id == id);
         if (bookingToUpdate == null) return NotFound();
         if (booking.seats < 1) return BadRequest();
-        // check if flight exists or the number of seats is available
+        
         var flight = _flightRoutes.FirstOrDefault(flightRoute =>
             flightRoute.itineraries.Any(flight => flight.flight_id == booking.flight_id));
+        
         if (flight == null) return NotFound();
+        
         var seatsAvailable = flight.itineraries.FirstOrDefault(f => f.flight_id == booking.flight_id)?.availableSeats;
+        
         if (seatsAvailable == null || seatsAvailable < booking.seats) return BadRequest();
+        
         bookingToUpdate.seats = booking.seats;
         bookingToUpdate.flight_id = booking.flight_id;
         bookingToUpdate.customer_id = booking.customer_id;
+        
         return Ok(bookingToUpdate);
     }
 }
