@@ -29,15 +29,15 @@ public class FlightsController : ControllerBase
     }
     
     [HttpGet("{id}")]
-    public IActionResult GetFlightRoute(int id)
+    public IActionResult GetFlight(string id)
     {
-        var flight = _flightRoutes!.FirstOrDefault(flightRoute => flightRoute.route_id == id.ToString());
+        var flight = _flightRoutes?.SelectMany(fr => fr.itineraries)
+            .FirstOrDefault(it => it.flight_id == id);
         if (flight == null) return NotFound();
-        _logger.LogInformation("Flight: {flight}", flight);
         return Ok(flight);
     }
-    
-    
+
+
     [HttpGet("from/{from}/to/{to}")]
     public IActionResult GetFlightRoutes(string from, string to)
     {
