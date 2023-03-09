@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using FlightBookingApi.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -72,8 +73,13 @@ public class CustomerController : ControllerBase
     [HttpPost]
     public IActionResult PostCustomer(Customer customer)
     {
+        if (!IsValidEmail(customer.email))
+        {
+            return BadRequest("Invalid email format");
+        }
+
         _customers.Add(customer);
-        return CreatedAtAction(nameof(GetCustomer), new {id = customer.customer_id}, customer);
+        return CreatedAtAction(nameof(GetCustomer), new { id = customer.customer_id }, customer);
     }
     
     [HttpPut("{id}")]
@@ -83,6 +89,10 @@ public class CustomerController : ControllerBase
         if (existingCustomer == null) return NotFound();
         existingCustomer.first_name = customer.first_name;
         existingCustomer.last_name = customer.last_name;
+        if (!IsValidEmail(customer.email))
+        {
+            return BadRequest("Invalid email format");
+        }
         existingCustomer.email = customer.email;
         existingCustomer.phone = customer.phone;
         existingCustomer.address = customer.address;
@@ -99,5 +109,11 @@ public class CustomerController : ControllerBase
         if (existingCustomer == null) return NotFound();
         _customers.Remove(existingCustomer);
         return NoContent();
+    }
+
+    bool IsValidEmail(string email)
+    {
+        string emailRegexPattern = @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$";
+        return Regex.IsMatch(email, emailRegexPattern);
     }
 }
