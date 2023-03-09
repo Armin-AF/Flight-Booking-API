@@ -81,22 +81,22 @@ public class BookingsController : ControllerBase
         _bookings.Remove(booking);
         return Ok();
     }
-    
+
     [HttpPut("{id}")]
-    public IActionResult PutBooking(string id, Booking booking)
-    {
+    public IActionResult PutBooking(string id, Booking booking){
+
         var bookingToUpdate = _bookings.FirstOrDefault(b => b.booking_id == id);
         if (bookingToUpdate == null) return NotFound();
-        bookingToUpdate = booking;
-        return Ok(bookingToUpdate);
-    }
-    
-    [HttpPatch("{id}")]
-    public IActionResult PatchBooking(string id, Booking booking)
-    {
-        var bookingToUpdate = _bookings.FirstOrDefault(b => b.booking_id == id);
-        if (bookingToUpdate == null) return NotFound();
-        bookingToUpdate = booking;
+        if (booking.seats < 1) return BadRequest();
+        // check if flight exists or the number of seats is available
+        var flight = _flightRoutes.FirstOrDefault(flightRoute =>
+            flightRoute.itineraries.Any(flight => flight.flight_id == booking.flight_id));
+        if (flight == null) return NotFound();
+        var seatsAvailable = flight.itineraries.FirstOrDefault(f => f.flight_id == booking.flight_id)?.availableSeats;
+        if (seatsAvailable == null || seatsAvailable < booking.seats) return BadRequest();
+        bookingToUpdate.seats = booking.seats;
+        bookingToUpdate.flight_id = booking.flight_id;
+        bookingToUpdate.customer_id = booking.customer_id;
         return Ok(bookingToUpdate);
     }
 }
