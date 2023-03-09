@@ -63,16 +63,30 @@ public class BookingsController : ControllerBase
     [HttpPost]
     public IActionResult PostBooking(Booking booking)
     {
-        if (booking.seats < 1) return BadRequest();
-        // check if flight exists or the number of seats is available
+        if (booking.seats < 1)
+        {
+            return BadRequest();
+        }
+
         var flight = _flightRoutes.FirstOrDefault(flightRoute => flightRoute.itineraries.Any(flight => flight.flight_id == booking.flight_id));
-        if (flight == null) return NotFound();
-        var seatsAvailable = flight.itineraries.FirstOrDefault(f => f.flight_id == booking.flight_id)?.availableSeats;
-        if (seatsAvailable == null || seatsAvailable < booking.seats) return BadRequest();
+        if (flight == null)
+        {
+            return NotFound();
+        }
+
+        var itinerary = flight.itineraries.FirstOrDefault(f => f.flight_id == booking.flight_id);
+        if (itinerary?.availableSeats < booking.seats)
+        {
+            return BadRequest();
+        }
+
         _bookings.Add(booking);
-        return Ok(booking);
+
+        var bookingId = _bookings.Count;
+        return CreatedAtAction(nameof(GetBooking), new { id = bookingId }, booking);
     }
     
+
     [HttpDelete("{id}")]
     public IActionResult DeleteBooking(string id)
     {
