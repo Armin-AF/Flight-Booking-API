@@ -1,52 +1,48 @@
-# Flight Booker API
+# Flight Booking API
 
-This project is a flight booking API in .Net that provides users with information on available flights, prices, and booking information. It has been built for a newly started flight booker company that needs to quickly publish their application and business within two weeks.
+This is a project to build a flight booking API for a new flight booking company. The purpose of the project is to build a backend prototype that provides the required endpoints for a flight booking website.
+
+## Background
+
+A newly started flight booker company needs your help, and they need it quickly! They’re supposed to publish their application and business within two weeks but haven't even gotten started on the booking-page itself. They have the frontend part under control, that’s for an external consultant to fix for them, but they need you to fix the backend!
+
+## Requirements
+
+The API includes the following endpoints:
+
+- Choosing two locations and getting all available flights between these locations
+- Choosing flights depending on given times
+- User should be able to book a flight
+- Error checking for invalid bookings (Not enough seating, etc)
+- Have flights with layovers. You should then connect existing flights with each other if a direct flight doesn't exist. For example, someone searches for Stockholm to Amsterdam. You don’t have any direct flight in your db for this, but you do have flights for Stockholm -> Oslo and Oslo -> Amsterdam. Then combine these two and present them as one flight, showing time for each flight and wait time between flights.
+- Set a price-range in your search
+
+## Implementation Details
+
+- The project is implemented in C# using the ASP.NET Core framework.
+
+- The data for the flights are stored in a JSON file provided with the project. The application reads this file at startup and loads the flight data into memory.
+
+- The project has a BookingsController that handles the endpoints for the bookings. 
+
+### The controller includes the following methods:
+
+#### /customer: manages customer data
+- GET: retrieves all customers
+- GET {id}: retrieves a single customer by ID
+- POST: creates a new customer
+- PUT {id}: updates an existing customer
+- DELETE {id}: deletes a customer
+#### /flights: manages flight data
+- GET: retrieves all flights
+- GET {id}: retrieves a single flight by ID
+- GET from/{from}/to/{to}: retrieves all flights from a given departure location to a given arrival location
 
 ## Getting Started
+- Clone the repository to your local machine.
+-Open the project in Rider or your preferred C# IDE.
+- Build and run the project.
+- The application will start running at http://localhost:5065.
 
-To get started with this project, clone the repository to your local machine and run the following commands:
-
-```csharp
-npm install
-npm start
-```
-
-This will install all the required dependencies and start the server.
-
-## API Endpoints
-
-The API endpoints that are available for use include:
-
-- GET /flights - This endpoint retrieves all available flights.
-- GET /flights/:id - This endpoint retrieves a specific flight by ID.
-- GET /flights/search - This endpoint allows the user to search for flights between two locations and within a given time frame.
-- POST /bookings - This endpoint allows the user to book a flight.
-- GET /bookings/:id - This endpoint retrieves a specific booking by ID.
-
-## Database
-
-The project uses an in-memory database to store flight and booking information. This means that all data is lost when the server is restarted. The flights data is stored in the flights.json file, which is loaded into the database when the server starts up.
-
-## Error Checking
-
-The API includes error checking for invalid bookings, such as not enough seating.
-
-## Connecting Flights
-
-The API also supports flights with layovers. If a direct flight is not available, the API will combine existing flights to create a connection between two locations.
-
-## Price Range
-
-The user can set a price range when searching for flights.
-
-## Authentication
-
-The API does not currently include authentication. However, it is recommended that authentication be added in the future, either via a login or a booking code.
-
-## Testing
-
-To test the API endpoints, you can use Swagger or Postman to check the validity of your endpoints and functionality of your application.
-
-## Conclusion
-
-This project provides a fully functioning flight booking API prototype that can be shown on your portfolio. It includes all required features and can be easily expanded upon in the future.
+Testing
+The API endpoints can be tested using a tool such as Postman or Swagger.
